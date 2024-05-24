@@ -60,10 +60,10 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
 
     if not crypt.verify(form.password, user.password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="usuario no encontrado"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="La contraseña no es correcta"
         )
     
 
     acces_token = {"sub":user.username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
 
-    return{"access_token": user.username, "token_type": "bearer" }
+    return{"access_token": acces_token, "token_type": "bearer" }
