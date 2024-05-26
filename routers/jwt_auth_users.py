@@ -30,14 +30,14 @@ users_db = {
         "full_name": "Cristobal Quilimaco",
         "email": "quilimacox1@gmail.com",
         "disabled": False,
-        "password": "$2a$12$teMnFWQ4ukYzqXa2E2/bKe7ep6P8mCRqvW0sHDc4.RAJ47HvUYNZ",
+        "password": "$2a$12$ld9MHyPv35sBer5gZ9XguuDIaGX14WnAqyydzQcDnjRbeyGfVERL2",
     },
     "cristobal2":{
         "username": "cristobal",
         "full_name": "Cristobal Jose Quilimaco Lopez",
         "email": "quilimacox2@gmail.com",
         "disabled": True,
-        "password": "$2a$12$BsSm4F2xW3JVBzULSXHAOuSgCLPR59l2CKJSVRAXtdZvSbdGsPu4",
+        "password": "$2a$12$UBbGAWSUCEcZIViglRg5.eQM552EanprS5BrUgY8fA9bs.TkMS5WC",
     }
 }
 
@@ -49,21 +49,17 @@ def search_user_db(username: str):
 
 @app.post("/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
-    users_db = users_db.get(form.username)
-    if not users_db:
+    user = users_db.get(form.username)
+    if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario o contraseña invalida")
+            status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario no existe")
     
     user = search_user_db(form.username)
-    
-    
-
     if not crypt.verify(form.password, user.password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="La contraseña no es correcta"
-        )
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario o contraseña inválida")
     
+    access_token = {"sub": user.username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
 
-    acces_token = {"sub":user.username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
+    return {"access_token": access_token, "token_type": "bearer" }
 
-    return{"access_token": acces_token, "token_type": "bearer" }
