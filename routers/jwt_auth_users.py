@@ -6,8 +6,9 @@ from jose import jwt
 from datetime import datetime, timedelta
 
 
-ALGORITH = "HS256"
+ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
+SECRET = "ASJGDJAHSVDajsbjaS126552DHFJ6000288ksaBVSJA"
 
 app = FastAPI() # instancia de la app
 
@@ -61,5 +62,5 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
     
     access_token = {"sub": user.username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
 
-    return {"access_token": access_token, "token_type": "bearer" }
+    return {"access_token": jwt.encode(access_token, SECRET, algorithm=ALGORITHM), "token_type": "bearer" }
 
