@@ -1,8 +1,9 @@
+from sys import exception
 from fastapi import FastAPI, Depends, HTTPException, status
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from fastapi.security import OAuth2AuthorizationCodeBearer, OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt
+from jose import JWTError, jwt
 from datetime import datetime, timedelta
 
 
@@ -50,14 +51,18 @@ def search_user_db(username: str):
 
 async def auth_user(token: str = Depends(oauth2)):
 
-    user = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
+    exception = HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales invalidos",
+                headers={"WWW-Autenticate": "Bearer"})
+    
+    try:
+        username = jwt.decode(token, SECRET, algorithms=[ALGORITHM]).get("sub")
+        if username is None:
+            raise exception
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales invalidos",
-            headers={"WWW-Autenticate": "Bearer"})
-
+    except JWTError:
+        raise exception
 
 async def current_user(user: User = Depends(auth_user)):
     if user.disabled:
