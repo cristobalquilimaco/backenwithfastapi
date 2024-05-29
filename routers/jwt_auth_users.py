@@ -65,9 +65,10 @@ async def auth_user(token: str = Depends(oauth2)):
             raise exception
         
         
-
     except JWTError:
         raise exception
+    
+    return search_user(username)
 
 async def current_user(user: User = Depends(auth_user)):
     if user.disabled:
