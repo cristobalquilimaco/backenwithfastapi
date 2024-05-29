@@ -48,6 +48,9 @@ def search_user_db(username: str):
     if username in users_db:
         return UserDB(**users_db[username]) 
 
+def search_user(username: str):
+    if username in users_db:
+        return User(**users_db[username])
 
 async def auth_user(token: str = Depends(oauth2)):
 
@@ -60,6 +63,8 @@ async def auth_user(token: str = Depends(oauth2)):
         username = jwt.decode(token, SECRET, algorithms=[ALGORITHM]).get("sub")
         if username is None:
             raise exception
+        
+        
 
     except JWTError:
         raise exception
