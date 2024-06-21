@@ -1,5 +1,5 @@
 from sys import exception
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from fastapi.security import OAuth2AuthorizationCodeBearer, OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -9,9 +9,9 @@ from datetime import datetime, timedelta
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_DURATION = 1
-SECRET = "ASJGDJAHSVDajsbjaS126552DHFJ6000288ksaBVSJA"
+SECRET = "ASJGDJAHSVDajsbjaS1as26552DHFJ6000288ksaBVSJA"
 
-app = FastAPI() # instancia de la app
+router = APIRouter() # instancia de la app
 
 oauth2 = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -79,8 +79,7 @@ async def current_user(user: User = Depends(auth_user)):
 
     return user
 
-
-@app.post("/login")
+@router.post("/login")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
     user = users_db.get(form.username)
     if not user:
@@ -93,9 +92,13 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Usuario o contraseña inválida")
     
     access_token = {"sub": user.username, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_DURATION)}
+    
+    # Generar el token JWT
+    token = jwt.encode(access_token, SECRET, algorithm=ALGORITHM)
+    
+    return {"access_token": token, "token_type": "bearer"}
 
-    return {"access_token": jwt.encode(access_token, SECRET, algorithm=ALGORITHM), "token_type": "bearer" }
 
-@app.get("/users/me")
+@router.get("/users/me")
 async def me(user: User = Depends(current_user)):
     return user
