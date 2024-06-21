@@ -58,7 +58,7 @@ async def current_user(token: str = Depends(oauth2)):
     return user
 
 
-@router.post("/login")
+@router.post("/logiin")
 async def login(form: OAuth2PasswordRequestForm = Depends()):
     users_db.get(form.username)
     if not users_db:
