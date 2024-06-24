@@ -24,25 +24,25 @@ users_list = [User(id=1, name="Cristobal", lastname="Quilimaco", email="quilimac
 
 #Obligatorio: tipar los datos para que no se puedan sobreescribir "Como estan el el basemodel"
 
-@router.get("/usersdb") #Se define el path 
+@router.get("/") #Se define el path 
 async def users():
     return users_list
 
 
 #----PATH
-@router.get("/usersdb{id}") #Se define path
+@router.get("/{id}") #Se define path
 async def user(id: int):
     return search_user(id)
     
 
 #----QUERY
-@router.get("/usersdb") #Se define Path
+@router.get("/") #Se define Path
 async def user(id: int):
     return search_user(id)
 
 
     ###----POST   ------ metodo para agregar un nuevo usuario
-@router.post("/usersdb", status_code=201) #Defnir path 
+@router.post("/", status_code=201) #Defnir path 
 async def user(user: User):
     if type(search_user(user.id)) == User:
         raise HTTPException(status_code=404, detail="El suario ya existe")
@@ -52,7 +52,7 @@ async def user(user: User):
     return user
 #------ PUT----- Metodo para actualizar un usuario 
 
-@router.put("/usersdb") #se define el path
+@router.put("/") #se define el path
 async def user(user: User):
 
     found = False # Se utiliza como indicador para ver si se encontro el usuario en "users_list" y que coincida con el id que esta intentando actualizar
@@ -67,7 +67,7 @@ async def user(user: User):
     
 
 #-------------------DELETE-------   metodo para eliminar un usuario
-@router.delete("/usersdb/{id}")
+@router.delete("/{id}")
 async def delete_user(id: int): #Declarar el valor del item como int para que lo pueda buscar como numero
     found = False      #Se uriliza como indicador para saber si se encontro el item
 
