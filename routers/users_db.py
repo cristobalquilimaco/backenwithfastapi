@@ -4,16 +4,12 @@
 from fastapi import APIRouter, HTTPException # importar fastapi 
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/users",
-                    tags=["users"],
+router = APIRouter(prefix="/userdb",
+                    tags=["userdb"],
                     responses={404:{"messaje":"NO existe"}}
                     )
 
 
-#Inicia el server con: uvicorn users:app --reload
-# uvicorn= nombre del servidor users= funciona asincrona app reload para que se cargue cada vez que hagamos cambios
-
-#Entidad User
 
 class User(BaseModel): # Este BaseModel nos esta dando la capacidad de crear una identidad
     id: int
@@ -28,31 +24,25 @@ users_list = [User(id=1, name="Cristobal", lastname="Quilimaco", email="quilimac
 
 #Obligatorio: tipar los datos para que no se puedan sobreescribir "Como estan el el basemodel"
 
-@router.get("/usersjson")
-async def users():  #Siempre que llamamos a un servidor la peticion debe ser asincrona
-    return [{"name": "Cristobal", "lastname": "Quilimaco", "email": "quilimacox1@gmail.com", "age": 29},
-    {"name": "Barbara", "lastname": "Cordova", "email": "brb.cordova@gmail.com", "age": 31},
-    {"name": "Justin", "lastname": "Bieber", "email": "bieber@gmail.com", "age": 29}]
-
-@router.get("/") #Se define el path 
+@router.get("/usersdb") #Se define el path 
 async def users():
     return users_list
 
 
 #----PATH
-@router.get("/{id}") #Se define path
+@router.get("/usersdb{id}") #Se define path
 async def user(id: int):
     return search_user(id)
     
 
 #----QUERY
-@router.get("/") #Se define Path
+@router.get("/usersdb") #Se define Path
 async def user(id: int):
     return search_user(id)
 
 
     ###----POST   ------ metodo para agregar un nuevo usuario
-@router.post("/", status_code=201) #Defnir path 
+@router.post("/usersdb", status_code=201) #Defnir path 
 async def user(user: User):
     if type(search_user(user.id)) == User:
         raise HTTPException(status_code=404, detail="El suario ya existe")
@@ -62,7 +52,7 @@ async def user(user: User):
     return user
 #------ PUT----- Metodo para actualizar un usuario 
 
-@router.put("/") #se define el path
+@router.put("/usersdb") #se define el path
 async def user(user: User):
 
     found = False # Se utiliza como indicador para ver si se encontro el usuario en "users_list" y que coincida con el id que esta intentando actualizar
@@ -77,7 +67,7 @@ async def user(user: User):
     
 
 #-------------------DELETE-------   metodo para eliminar un usuario
-@router.delete("/{id}")
+@router.delete("/usersdb/{id}")
 async def delete_user(id: int): #Declarar el valor del item como int para que lo pueda buscar como numero
     found = False      #Se uriliza como indicador para saber si se encontro el item
 
