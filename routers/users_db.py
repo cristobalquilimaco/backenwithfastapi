@@ -3,6 +3,7 @@
 
 from fastapi import APIRouter, HTTPException 
 from pydantic import BaseModel
+from db.models.user import User
 
 router = APIRouter(prefix="/userdb",
                     tags=["userdb"],
@@ -11,16 +12,8 @@ router = APIRouter(prefix="/userdb",
 
 
 
-class User(BaseModel): 
-    id: int
-    name: str
-    lastname: str
-    email: str
-    age: int
 
-users_list = [User(id=1, name="Cristobal", lastname="Quilimaco", email="quilimacox1@gmail.com", age=29),
-                User(id=2,name="Barbara", lastname="Cordova", email="brb.cordova@gmail.com", age=31),
-                User(id=3,name="Justin", lastname="Lastame", email="bieber@gmail.com", age=29)]
+users_list = []
 
 
 @router.get("/") 
