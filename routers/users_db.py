@@ -4,6 +4,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from db.models.user import User
+from db.client import db_client
 
 router = APIRouter(prefix="/userdb",
                     tags=["userdb"],
@@ -31,13 +32,15 @@ async def user(id: int):
     return search_user(id)
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED) 
+@router.post("/", response_model=User, status_code=status.HTTP_201_CREATED) 
 async def user(user: User):
-    if type(search_user(user.id)) == User:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El suario ya existe")
-   
+    """if type(search_user(user.id)) == User:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El suario ya existe")"""
     
-    users_list.append(user)
+    user_dict = dict(user)
+    
+    db_client.local.users.insert_one(user_dict)
+
     return user
 #------ PUT----- Metodo para actualizar un usuario 
 
