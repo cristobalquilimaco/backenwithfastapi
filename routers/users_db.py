@@ -1,6 +1,7 @@
 ### Users DB API ###
 
 
+from hmac import new
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from db.models.user import User
@@ -38,8 +39,10 @@ async def user(user: User):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El suario ya existe")"""
     
     user_dict = dict(user)
-    
-    db_client.local.users.insert_one(user_dict)
+    del user_dict["id"]
+    id = db_client.local.users.insert_one(user_dict).inserted_id
+
+    new_user = db_client.local.users.find_one({"_id":id})
 
     return user
 #------ PUT----- Metodo para actualizar un usuario 
