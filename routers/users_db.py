@@ -5,6 +5,7 @@ from hmac import new
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from db.models.user import User
+from db.schemas.user import user_schemas
 from db.client import db_client
 
 router = APIRouter(prefix="/userdb",
@@ -42,7 +43,7 @@ async def user(user: User):
     del user_dict["id"]
     id = db_client.local.users.insert_one(user_dict).inserted_id
 
-    new_user = db_client.local.users.find_one({"_id":id})
+    new_user = user_schemas(db_client.local.users.find_one)({"_id":id})
 
     return user
 #------ PUT----- Metodo para actualizar un usuario 
@@ -84,4 +85,3 @@ def search_user(id: int):
         return {"Error: No se ha encontrado el usuario"}
     
 
-    
