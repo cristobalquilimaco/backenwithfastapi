@@ -82,3 +82,6 @@ def search_user(id: int):
         return list(users)[0]
     except:
         return {"Error: No se ha encontrado el usuario"}
+    
+
+    
