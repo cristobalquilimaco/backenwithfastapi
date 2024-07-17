@@ -80,7 +80,8 @@ async def delete_user(id: int):
 def search_user_by_email(email: int):
     users = filter(lambda user: user.id == id, users_list)
     try:
-        return user_schemas(db_client.local.user.find_one({"email": email}))
+        user = db_client.local.user.find_one({"email": email})
+        return User(user_schemas(**user))
     except:
         return {"Error: No se ha encontrado el usuario"}
     
