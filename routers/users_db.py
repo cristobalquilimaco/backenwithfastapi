@@ -1,6 +1,7 @@
 ### Users DB API ###
 
 
+import email
 from hmac import new
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
@@ -15,9 +16,9 @@ router = APIRouter(prefix="/userdb",
 users_list = []
 
 
-@router.get("/") 
+@router.get("/", response_model=list(User)) 
 async def users():
-    return users_list
+    return db_client
 
 
 #----PATH
@@ -34,8 +35,8 @@ async def user(id: int):
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def user(user: User):
-    """if type(search_user(user.id)) == User:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El suario ya existe")"""
+    if type(search_user_by_email(user.email)) == User:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El suario ya existe")
     
 
     user_dict = dict(user)
@@ -77,12 +78,13 @@ async def delete_user(id: int):
 
 
 
-def search_user_by_email(email: int):
-    users = filter(lambda user: user.id == id, users_list)
+def search_user_by_email(email: str):
     try:
-        user = db_client.local.user.find_one({"email": email})
-        return User(user_schemas(**user))
+        user = db_client.users.find_one({"email": email})
+        return User(**user_schemas(user))
     except:
-        return {"Error: No se ha encontrado el usuario"}
+        return {"Usuario duplicado"}
     
 
+def search_user(id: int):
+    return ""
