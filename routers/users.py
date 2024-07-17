@@ -9,7 +9,6 @@ router = APIRouter(prefix="/users",
                     responses={404:{"messaje":"NO existe"}}
                     )
 
-
 #Inicia el server con: uvicorn users:app --reload
 # uvicorn= nombre del servidor users= funciona asincrona app reload para que se cargue cada vez que hagamos cambios
 
