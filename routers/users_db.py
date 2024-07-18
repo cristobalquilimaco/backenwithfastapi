@@ -80,7 +80,7 @@ async def delete_user(id: int):
 
 def search_user(field: str, key:str):
     try:
-        user = db_client.users.find_one({"email": email})
+        user = db_client.users.find_one({field: str, key:str})
         return User(**user_schemas(user))
     except:
         return {"Usuario duplicado"}
