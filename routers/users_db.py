@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from db.models.user import User
 from db.schemas.user import user_schemas, users_schema
 from db.client import db_client
+from bson import ObjectId
 
 router = APIRouter(prefix="/userdb",
                 tags=["userdb"],
