@@ -24,18 +24,18 @@ async def users():
 #----PATH
 @router.get("/{id}")
 async def user(id: int):
-    return search_user(id)
+    return search_user("email", user.email)
     
 
 #----QUERY
 @router.get("/") 
 async def user(id: int):
-    return search_user(id)
+    return search_user("email", user.emai)
 
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def user(user: User):
-    if type(search_user(user.email)) == User:
+    if type(search_user("email", user.email )) == User:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El suario ya existe")
     
 
