@@ -18,7 +18,7 @@ users_list = []
 
 @router.get("/", response_model=list(User)) 
 async def users():
-    return db_client
+    return db_client.local.users.find()
 
 
 #----PATH

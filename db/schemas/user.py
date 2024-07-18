@@ -5,3 +5,5 @@ def user_schemas(user) -> dict:
         "email": user["email"]
     }
     
+def users_schema(users) -> list:
+    return [user_schemas(user) for user in users]
