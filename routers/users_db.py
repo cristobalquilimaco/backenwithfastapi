@@ -6,7 +6,7 @@ from hmac import new
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from db.models.user import User
-from db.schemas.user import user_schemas
+from db.schemas.user import user_schemas, users_schema
 from db.client import db_client
 
 router = APIRouter(prefix="/userdb",
@@ -18,7 +18,7 @@ users_list = []
 
 @router.get("/", response_model=list(User)) 
 async def users():
-    return db_client.local.users.find()
+    return users_schema(db_client.local.users.find())
 
 
 #----PATH
@@ -78,7 +78,7 @@ async def delete_user(id: int):
 
 
 
-def search_user_by_email(email: str):
+def search_user(field: str, key:str):
     try:
         user = db_client.users.find_one({"email": email})
         return User(**user_schemas(user))
