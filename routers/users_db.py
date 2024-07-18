@@ -23,14 +23,14 @@ async def users():
 
 #----PATH
 @router.get("/{id}")
-async def user(id: int):
-    return search_user("email", user.email)
+async def user(id: str):
+    return search_user("_id", id)
     
 
 #----QUERY
 @router.get("/") 
-async def user(id: int):
-    return search_user("email", user.emai)
+async def user(id: str):
+    return search_user("_id", id)
 
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
