@@ -25,7 +25,7 @@ async def users():
 #----PATH
 @router.get("/{id}")
 async def user(id: str):
-    return search_user("_id", id)
+    return search_user("_id", ObjectId(id))
     
 
 #----QUERY
