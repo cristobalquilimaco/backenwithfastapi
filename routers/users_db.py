@@ -35,7 +35,7 @@ async def user(id: int):
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def user(user: User):
-    if type(search_user_by_email(user.email)) == User:
+    if type(search_user(user.email)) == User:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El suario ya existe")
     
 
