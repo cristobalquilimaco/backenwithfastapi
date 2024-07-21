@@ -1,16 +1,12 @@
-# Clase en vídeo: https://youtu.be/_y9qQZXE24A?t=20480
-
-### Users DB API ###
-
 from fastapi import APIRouter, HTTPException, status
 from db.models.user import User
-from db.schemas.user import users_schema, user_schemas
+from db.schemas.user import user_schemas, users_schema
 from db.client import db_client
 from bson import ObjectId
 
-router = APIRouter(prefix="/usersdb",
-                   tags=["usersdb"],
-                   responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
+router = APIRouter(prefix="/userdb",
+                tags=["userdb"],
+                responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
 
 
 @router.get("/", response_model=list[User])
