@@ -1,9 +1,9 @@
 def user_schemas(user) -> dict:
     return {
-        "id": str(user["_id"]),
+        "id": str(user["id"]),
         "username": user["username"],
         "email": user["email"]
     }
-    
+
 def users_schema(users) -> list:
     return [user_schemas(user) for user in users]

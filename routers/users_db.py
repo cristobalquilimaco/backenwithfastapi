@@ -1,75 +1,77 @@
 from fastapi import APIRouter, HTTPException, status
+from typing import List
 from db.models.user import User
 from db.schemas.user import user_schemas, users_schema
 from db.client import db_client
-from bson import ObjectId
+from helpers.helpers import search_user
 
 router = APIRouter(prefix="/userdb",
-                tags=["userdb"],
-                responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
-
-
-@router.get("/", response_model=list[User])
-async def users():
-    return users_schema(db_client.users.find())
-
-
-@router.get("/{id}")  # Path
-async def user(id: str):
-    return search_user("_id", ObjectId(id))
-
-
-@router.get("/")  # Query
-async def user(id: str):
-    return search_user("_id", ObjectId(id))
-
+                   tags=["userdb"],
+                   responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
-async def user(user: User):
-    if type(search_user("email", user.email)) == User:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="El usuario ya existe")
+async def create_user(user: User):
+    cursor = db_client.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = %s", (user.email,))
+    existing_user = cursor.fetchone()
+    if existing_user:
+        cursor.close()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
 
     user_dict = dict(user)
-    del user_dict["id"]
+    user_dict.pop("id", None)  # Elimina la clave 'id' si existe
 
-    id = db_client.users.insert_one(user_dict).inserted_id
+    columns = ', '.join(user_dict.keys())
+    values = ', '.join(['%s'] * len(user_dict))
+    sql = f"INSERT INTO users ({columns}) VALUES ({values})"
+    cursor.execute(sql, tuple(user_dict.values()))
+    db_client.commit()
+    new_id = cursor.lastrowid
+    cursor.close()
 
-    new_user = user_schemas(db_client.users.find_one({"_id": id}))
+    new_user = search_user("id", new_id)
+    return user_schemas(new_user)
 
-    return User(**new_user)
+@router.get("/", response_model=List[User])
+async def users():
+    cursor = db_client.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users")
+    users = cursor.fetchall()
+    cursor.close()
+    return users_schema(users)
 
+@router.get("/{id}", response_model=User)
+async def user(id: str):
+    user = search_user("id", id)
+    if "error" in user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=user["error"])
+    return user_schemas(user)
 
 @router.put("/", response_model=User)
-async def user(user: User):
-
+async def update_user(user: User):
     user_dict = dict(user)
-    del user_dict["id"]
+    user_id = user_dict.pop("id", None)
 
-    try:
-        db_client.users.find_one_and_replace(
-            {"_id": ObjectId(user.id)}, user_dict)
-    except:
-        return {"error": "No se ha actualizado el usuario"}
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ID del usuario es requerido")
 
-    return search_user("_id", ObjectId(user.id))
+    cursor = db_client.cursor()
+    set_clause = ', '.join([f"{key} = %s" for key in user_dict.keys()])
+    sql = f"UPDATE users SET {set_clause} WHERE id = %s"
+    cursor.execute(sql, tuple(user_dict.values()) + (user_id,))
+    db_client.commit()
+    cursor.close()
 
+    updated_user = search_user("id", user_id)
+    if "error" in updated_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=updated_user["error"])
+    return user_schemas(updated_user)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def user(id: str):
-
-    found = db_client.users.find_one_and_delete({"_id": ObjectId(id)})
-
-    if not found:
-        return {"error": "No se ha eliminado el usuario"}
-
-# Helper
-
-
-def search_user(field: str, key):
-
-    try:
-        user = db_client.users.find_one({field: key})
-        return User(**user_schemas(user))
-    except:
-        return {"error": "No se ha encontrado el usuario"}
+async def delete_user(id: str):
+    cursor = db_client.cursor()
+    cursor.execute("DELETE FROM users WHERE id = %s", (id,))
+    db_client.commit()
+    cursor.close()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se ha eliminado el usuario")
