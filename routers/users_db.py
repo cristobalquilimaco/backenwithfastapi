@@ -1,77 +1,68 @@
 from fastapi import APIRouter, HTTPException, status
-from typing import List
 from db.models.user import User
-from db.schemas.user import user_schemas, users_schema
-from db.client import db_client
-from helpers.helpers import search_user
+from db.schemas.user import user_schema, users_schema
+from db.client import db_client, cursor
 
 router = APIRouter(prefix="/userdb",
                    tags=["userdb"],
                    responses={status.HTTP_404_NOT_FOUND: {"message": "No encontrado"}})
 
+@router.get("/", response_model=list[User])
+async def users():
+    cursor.execute("SELECT * FROM users")
+    result = cursor.fetchall()
+    return users_schema(result)
+
+@router.get("/{id}", response_model=User)  # Path
+async def user(id: int):
+    cursor.execute("SELECT * FROM users WHERE id = %s", (id,))
+    result = cursor.fetchone()
+    if result:
+        return user_schema(result)
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(user: User):
-    cursor = db_client.cursor()
     cursor.execute("SELECT * FROM users WHERE email = %s", (user.email,))
-    existing_user = cursor.fetchone()
-    if existing_user:
-        cursor.close()
+    if cursor.fetchone():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
 
-    user_dict = dict(user)
-    user_dict.pop("id", None)  # Elimina la clave 'id' si existe
+    user_dict = user.dict()
+    cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
+                (user.username, user.email, user.password))
+    db_client.commit()  
 
-    columns = ', '.join(user_dict.keys())
-    values = ', '.join(['%s'] * len(user_dict))
-    sql = f"INSERT INTO users ({columns}) VALUES ({values})"
-    cursor.execute(sql, tuple(user_dict.values()))
-    db_client.commit()
-    new_id = cursor.lastrowid
-    cursor.close()
+    user_id = cursor.lastrowid  
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    new_user = cursor.fetchone()
 
-    new_user = search_user("id", new_id)
-    return user_schemas(new_user)
-
-@router.get("/", response_model=List[User])
-async def users():
-    cursor = db_client.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users")
-    users = cursor.fetchall()
-    cursor.close()
-    return users_schema(users)
-
-@router.get("/{id}", response_model=User)
-async def user(id: str):
-    user = search_user("id", id)
-    if "error" in user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=user["error"])
-    return user_schemas(user)
+    return user_schema(new_user)
 
 @router.put("/", response_model=User)
 async def update_user(user: User):
-    user_dict = dict(user)
-    user_id = user_dict.pop("id", None)
+    user_dict = user.dict()
+    user_id = user.id
 
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ID del usuario es requerido")
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    if not cursor.fetchone():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
-    cursor = db_client.cursor()
-    set_clause = ', '.join([f"{key} = %s" for key in user_dict.keys()])
-    sql = f"UPDATE users SET {set_clause} WHERE id = %s"
-    cursor.execute(sql, tuple(user_dict.values()) + (user_id,))
-    db_client.commit()
-    cursor.close()
+    cursor.execute("UPDATE users SET username = %s, email = %s, password = %s WHERE id = %s",
+                (user.username, user.email, user.password, user_id))
+    db_client.commit()  # Make sure to commit the transaction
 
-    updated_user = search_user("id", user_id)
-    if "error" in updated_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=updated_user["error"])
-    return user_schemas(updated_user)
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    updated_user = cursor.fetchone()
+
+    return user_schema(updated_user)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(id: str):
-    cursor = db_client.cursor()
+async def delete_user(id: int):
     cursor.execute("DELETE FROM users WHERE id = %s", (id,))
-    db_client.commit()
-    cursor.close()
+    db_client.commit()  # Make sure to commit the transaction
+
     if cursor.rowcount == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No se ha eliminado el usuario")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+
+    return None
